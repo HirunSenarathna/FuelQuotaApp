@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">FuelQuotaApp</string>
+
+
+    <string name="scan_qr_code">Scan QR Code</string>
+    <string name="vehicle_information">Vehicle Information</string>
+    <string name="remaining_quota">Remaining Quota</string>
+    <string name="enter_pumped_amount">Enter Pumped Amount (Liters)</string>
+    <string name="confirm_fuel_pump">Confirm Fuel Pump</string>
+    <string name="processing">Processing...</string>
+</resources>
