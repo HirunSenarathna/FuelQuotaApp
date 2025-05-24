@@ -46,5 +46,20 @@
         app:cornerRadius="12dp"
         style="@style/Widget.MaterialComponents.Button" />
 
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/logoutButton"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:text="Logout"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        app:icon="@drawable/ic_logout"
+        app:iconGravity="textStart"
+        app:iconPadding="12dp"
+        app:cornerRadius="12dp"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        app:strokeColor="@color/primary_color"
+        app:strokeWidth="2dp" />
+
 
 </LinearLayout>
