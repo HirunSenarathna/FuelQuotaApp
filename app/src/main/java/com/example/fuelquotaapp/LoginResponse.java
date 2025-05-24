@@ -1,8 +1,12 @@
 package com.example.fuelquotaapp;
 
+import com.google.gson.annotations.SerializedName;
+
 public class LoginResponse {
 
+    @SerializedName("access_token")
     private String accessToken;
+    @SerializedName("expires_in")
     private long expiresIn;
 
     public String getAccessToken() { return accessToken; }
