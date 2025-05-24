@@ -39,7 +39,7 @@ public class QRScannerActivity extends AppCompatActivity {
         setContentView(R.layout.activity_qr_scanner);
 
         barcodeView = findViewById(R.id.barcode_scanner);
-        apiService = new ApiService();
+        apiService = new ApiService(this);
 
         Collection<BarcodeFormat> formats = Arrays.asList(BarcodeFormat.QR_CODE, BarcodeFormat.CODE_39);
         barcodeView.getBarcodeView().setDecoderFactory(new DefaultDecoderFactory(formats));
