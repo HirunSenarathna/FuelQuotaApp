@@ -25,6 +25,50 @@ public class ApiService {
         gson = new Gson();
     }
 
+    // Login method
+    public void login(LoginRequest loginRequest, ApiCallback<LoginResponse> callback) {
+        String json = gson.toJson(loginRequest);
+
+        RequestBody body = RequestBody.create(
+                MediaType.parse("application/json"), json);
+
+        Request httpRequest = new Request.Builder()
+                .url(BASE_URL + "/account/login")
+                .post(body)
+                .addHeader("Content-Type", "application/json")
+                .build();
+
+        client.newCall(httpRequest).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                Log.e(TAG, "Login API call failed", e);
+                callback.onError("Network error: " + e.getMessage());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (response.isSuccessful()) {
+                    String responseBody = response.body().string();
+                    Log.d(TAG, "Login response: " + responseBody);
+
+                    try {
+                        LoginResponse loginResponse = gson.fromJson(responseBody, LoginResponse.class);
+                        callback.onSuccess(loginResponse);
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error parsing login response", e);
+                        callback.onError("Error parsing login response: " + e.getMessage());
+                    }
+                } else {
+                    String errorBody = response.body() != null ? response.body().string() : "Unknown error";
+                    Log.e(TAG, "Login failed: " + response.code() + " - " + errorBody);
+
+                    String errorMessage = getErrorMessage(response.code());
+                    callback.onError(errorMessage);
+                }
+            }
+        });
+    }
+
     public void processFuelTransaction(FuelTransactionRequest request, ApiCallback<String> callback) {
         String json = gson.toJson(request);
 
@@ -100,6 +144,23 @@ public class ApiService {
                 }
             }
         });
+    }
+
+
+    // Helper method to get appropriate error messages based on HTTP status codes
+    private String getErrorMessage(int statusCode) {
+        switch (statusCode) {
+            case 401:
+                return "Invalid username or password";
+            case 403:
+                return "Access denied";
+            case 404:
+                return "Server not found";
+            case 500:
+                return "Server error. Please try again later.";
+            default:
+                return "Network error (Code: " + statusCode + ")";
+        }
     }
 
     // Helper class to match the backend Vehicle model response

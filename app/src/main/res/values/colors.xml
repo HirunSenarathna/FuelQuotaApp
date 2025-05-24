@@ -15,6 +15,10 @@
     <color name="quota_card_background">#4CAF50</color>
     <color name="delete_button_color">#F44336</color>
 
+    <!-- Error Colors -->
+    <color name="error_text">#D32F2F</color>
+    <color name="error_background">#FFEBEE</color>
+
     <color name="white">#FFFFFF</color>
 
 </resources>
