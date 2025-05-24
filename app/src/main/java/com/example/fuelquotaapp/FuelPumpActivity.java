@@ -1,5 +1,6 @@
 package com.example.fuelquotaapp;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -27,7 +28,7 @@ public class FuelPumpActivity extends AppCompatActivity {
         setContentView(R.layout.activity_fuel_pump);
 
         vehicleInfo = (VehicleInfo) getIntent().getSerializableExtra("vehicle_info");
-        apiService = new ApiService();
+        apiService = new ApiService(this);
 
         initViews();
         displayVehicleInfo();
@@ -132,11 +133,25 @@ public class FuelPumpActivity extends AppCompatActivity {
                 return;
             }
 
+            // Retrieve operatorId and stationId from SharedPreferences
+            SharedPreferences prefs = getSharedPreferences("FuelAppPrefs", MODE_PRIVATE);
+            int operatorId = prefs.getInt("operator_id", 0);
+            int stationId = prefs.getInt("station_id", 0);
+
+            if (operatorId == 0 || stationId == 0) {
+                Toast.makeText(this, "Operator or station data not found", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
             // Create fuel transaction request
             FuelTransactionRequest request = new FuelTransactionRequest();
             request.setVehicleNumber(vehicleInfo.getVehicleNumber());
             request.setChassisNumber(vehicleInfo.getChassisNumber());
+            request.setFuelType(vehicleInfo.getFuelType());
             request.setPumpedAmount(pumpedAmount);
+            request.setOperatorId(operatorId);
+            request.setStationId(stationId);
+
 
             // Process the transaction
             processFuelTransaction(request);

@@ -49,7 +49,7 @@ public class LoginActivity extends AppCompatActivity {
         setupClickListeners();
 
         // Initialize ApiService and Handler for UI updates
-        apiService = new ApiService();
+        apiService = new ApiService(this);
         mainHandler = new Handler(Looper.getMainLooper());
     }
 
@@ -130,11 +130,34 @@ public class LoginActivity extends AppCompatActivity {
             // Save login data
             saveLoginData(accessToken, username, expiresIn);
 
-            // Show success message
-            Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show();
+            // Fetch current user data
+            apiService.getCurrentUser(new ApiCallback<FuelOperatorUserResponseDto>() {
+                @Override
+                public void onSuccess(FuelOperatorUserResponseDto userResponse) {
+                    mainHandler.post(() -> {
+                        // Save operatorId and stationId
+                        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+                        SharedPreferences.Editor editor = prefs.edit();
+                        editor.putInt("operator_id", userResponse.getOperatorId());
+                        editor.putInt("station_id", userResponse.getStationId());
+                        editor.apply();
 
-            // Navigate to main activity
-            navigateToMainActivity();
+                        // Show success message
+                        Toast.makeText(LoginActivity.this, "Login successful!", Toast.LENGTH_SHORT).show();
+
+                        // Navigate to main activity
+                        navigateToMainActivity();
+                    });
+                }
+
+                @Override
+                public void onError(String error) {
+                    mainHandler.post(() -> {
+                        Log.e(TAG, "Error fetching current user: " + error);
+                        showError("Error fetching user data: " + error);
+                    });
+                }
+            });
 
         } catch (Exception e) {
             Log.e(TAG, "Error processing login response", e);
@@ -156,7 +179,12 @@ public class LoginActivity extends AppCompatActivity {
         editor.putLong("expires_in", expiresIn);
         editor.putLong("login_time", System.currentTimeMillis());
 
-        editor.apply();
+        boolean success = editor.commit();
+        Log.d(TAG, "Saved access_token: " + accessToken + ", Success: " + success);
+
+        // Verify the token was saved
+        String savedToken = prefs.getString(KEY_ACCESS_TOKEN, null);
+        Log.d(TAG, "Immediately retrieved access_token: " + savedToken);
     }
 
     private boolean isUserLoggedIn() {

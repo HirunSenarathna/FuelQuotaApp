@@ -1,8 +1,12 @@
 package com.example.fuelquotaapp;
 
+import static android.content.Context.MODE_PRIVATE;
+
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.util.Log;
 import okhttp3.*;
 import com.google.gson.Gson;
@@ -10,13 +14,18 @@ import com.google.gson.Gson;
 
 public class ApiService {
 
+    private static final String PREFS_NAME = "FuelAppPrefs";
+    private static final String KEY_ACCESS_TOKEN = "access_token";
     private static final String BASE_URL = "http://localhost:8080";
     private static final String TAG = "ApiService";
 
     private OkHttpClient client;
     private Gson gson;
 
-    public ApiService() {
+    private Context context; // Add Context field
+
+    public ApiService(Context context) {
+        this.context = context;
         client = new OkHttpClient.Builder()
                 .connectTimeout(30, TimeUnit.SECONDS)
                 .readTimeout(30, TimeUnit.SECONDS)
@@ -64,6 +73,53 @@ public class ApiService {
 
                     String errorMessage = getErrorMessage(response.code());
                     callback.onError(errorMessage);
+                }
+            }
+        });
+    }
+
+    public void getCurrentUser(ApiCallback<FuelOperatorUserResponseDto> callback) {
+        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        Log.d(TAG, "SharedPreferences keys: " + prefs.getAll().keySet());
+        String accessToken = prefs.getString(KEY_ACCESS_TOKEN, null);
+        Log.d(TAG, "Retrieved access_token: " + accessToken);
+
+        if (accessToken == null) {
+            callback.onError("No access token found");
+            return;
+        }
+
+        Request httpRequest = new Request.Builder()
+                .url(BASE_URL + "/account/currentuser")
+                .get()
+                .addHeader("Content-Type", "application/json")
+                .addHeader("Authorization", "Bearer " + accessToken)
+                .build();
+
+        client.newCall(httpRequest).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                Log.e(TAG, "Current user API call failed", e);
+                callback.onError("Network error: " + e.getMessage());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (response.isSuccessful()) {
+                    String responseBody = response.body().string();
+                    Log.d(TAG, "Current user response: " + responseBody);
+
+                    try {
+                        FuelOperatorUserResponseDto userResponse = gson.fromJson(responseBody, FuelOperatorUserResponseDto.class);
+                        callback.onSuccess(userResponse);
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error parsing current user response", e);
+                        callback.onError("Error parsing current user response: " + e.getMessage());
+                    }
+                } else {
+                    String errorBody = response.body() != null ? response.body().string() : "Unknown error";
+                    Log.e(TAG, "Current user fetch failed: " + response.code() + " - " + errorBody);
+                    callback.onError("Server error: " + response.code() + " - " + errorBody);
                 }
             }
         });
