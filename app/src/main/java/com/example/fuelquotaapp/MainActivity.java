@@ -1,45 +1,40 @@
 package com.example.fuelquotaapp;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.Volley;
 import com.google.android.material.button.MaterialButton;
-import com.google.zxing.integration.android.IntentIntegrator;
-import com.google.zxing.integration.android.IntentResult;
 
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import android.Manifest;
 
 public class MainActivity extends AppCompatActivity {
     private static final int CAMERA_PERMISSION_REQUEST = 100;
+    private static final String PREFS_NAME = "FuelAppPrefs";
+    private static final String TAG = "MainActivity";
+
     private MaterialButton scanQRButton;
+    private MaterialButton logoutButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // Enable the action bar/toolbar
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setTitle("Fuel Station");
+        }
 
         initViews();
         setupClickListeners();
@@ -47,6 +42,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void initViews() {
         scanQRButton = findViewById(R.id.scanQRButton);
+        logoutButton = findViewById(R.id.logoutButton);
     }
 
     private void setupClickListeners() {
@@ -57,6 +53,7 @@ public class MainActivity extends AppCompatActivity {
                 requestCameraPermission();
             }
         });
+        logoutButton.setOnClickListener(v -> showLogoutConfirmationDialog());
     }
 
     private boolean checkCameraPermission() {
@@ -88,4 +85,39 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
+    private void showLogoutConfirmationDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("Logout")
+                .setMessage("Are you sure you want to logout?")
+                .setPositiveButton("Yes", (dialog, which) -> performLogout())
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void performLogout() {
+        try {
+            // Clear all saved data
+            SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.clear();
+            boolean success = editor.commit();
+
+            Log.d(TAG, "Logout - SharedPreferences cleared: " + success);
+
+            // Show logout message
+            Toast.makeText(this, "Logged out successfully", Toast.LENGTH_SHORT).show();
+
+            // Navigate back to login screen
+            Intent intent = new Intent(this, LoginActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error during logout", e);
+            Toast.makeText(this, "Error during logout", Toast.LENGTH_SHORT).show();
+        }
+    }
+
 }
